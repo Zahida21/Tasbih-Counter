@@ -4,21 +4,39 @@ import { MdVibration } from "react-icons/md";
 import "./styles.css";
 
 export default function App() {
-  const [count, setCount] = useState(0);
-  const [target, setTarget] = useState(1000);
+  // ✅ load from localStorage on init
+  const [count, setCount] = useState(() => {
+    const saved = localStorage.getItem("tasbih-count");
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  const [target, setTarget] = useState(() => {
+    const saved = localStorage.getItem("tasbih-target");
+    return saved ? parseInt(saved, 10) : 33; // default 0
+  });
 
   const [showSheet, setShowSheet] = useState(false);
-  const [selected, setSelected] = useState(1000); // temp selection in sheet
+  const [selected, setSelected] = useState(0);
   const [customMode, setCustomMode] = useState(false);
   const [customValue, setCustomValue] = useState("");
 
   const [vibrateOnTarget, setVibrateOnTarget] = useState(true);
   const [didVibrateForThisTarget, setDidVibrateForThisTarget] = useState(false);
 
-  const reachedTarget = useMemo(() => count >= target, [count, target]);
+  const reachedTarget = useMemo(() => count >= target && target > 0, [count, target]);
 
+  // ✅ persist count in localStorage
   useEffect(() => {
-    // Reset “already vibrated” whenever target changes
+    localStorage.setItem("tasbih-count", count);
+  }, [count]);
+
+  // ✅ persist target in localStorage
+  useEffect(() => {
+    localStorage.setItem("tasbih-target", target);
+  }, [target]);
+
+  // reset vibration status when target changes
+  useEffect(() => {
     setDidVibrateForThisTarget(false);
   }, [target]);
 
@@ -28,16 +46,15 @@ export default function App() {
         navigator.vibrate(pattern);
       }
     } catch {
-      // silently ignore (desktop / unsupported browsers)
+      // silently ignore unsupported browsers
     }
   }
 
   function handleTap() {
-    if (reachedTarget) return; // stop counting beyond target
     const next = count + 1;
     setCount(next);
 
-    if (vibrateOnTarget && next === target && !didVibrateForThisTarget) {
+    if (vibrateOnTarget && target > 0 && next === target && !didVibrateForThisTarget) {
       vibrate([180, 100, 280]);
       setDidVibrateForThisTarget(true);
     }
@@ -46,6 +63,7 @@ export default function App() {
   function handleReset() {
     setCount(0);
     setDidVibrateForThisTarget(false);
+    localStorage.setItem("tasbih-count", 0); // ✅ reset persisted count
   }
 
   function openTargetSheet() {
@@ -74,10 +92,10 @@ export default function App() {
       {/* Top bar */}
       <header className="topbar">
         <button className="back-btn" aria-label="Back" title="Back">
-          <FiChevronLeft size={22} />
+          {/* <FiChevronLeft size={22} /> */}
         </button>
         <h1 className="title">Tasbih Counter</h1>
-        <div style={{ width: 22 }} />{/* spacer */}
+        <div style={{ width: 22 }} />
       </header>
 
       {/* Actions row */}
@@ -149,11 +167,7 @@ export default function App() {
             </div>
 
             <div className="grid">
-              {[
-                { label: "33", value: 33 },
-                { label: "100", value: 100 },
-                { label: "1000", value: 1000 },
-              ].map((opt) => (
+              {[{ label: "33", value: 33 }, { label: "100", value: 100 }, { label: "1000", value: 1000 }].map((opt) => (
                 <button
                   key={opt.value}
                   className={`pill ${!customMode && selected === opt.value ? "selected" : ""}`}
@@ -193,13 +207,6 @@ export default function App() {
           </div>
         </>
       )}
-
-      {/* Footer note for vibration support */}
-      <footer className="footnote">
-        {typeof navigator !== "undefined" && "vibrate" in navigator
-          ? "Vibration supported on this device."
-          : "Note: Vibration works on most Android browsers over HTTPS."}
-      </footer>
     </div>
   );
 }

@@ -59,7 +59,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,Seg
 .tap-ring:active{transform:scale(.995)}
 .tap-ring.done{border-color:rgba(17,207,197,.3);box-shadow:0 0 0 4px rgba(17,207,197,.08) inset}
 .tap-inner{text-align:center}
-.tap-text{display:block;font-size:22px;opacity:.85}
+.tap-text{display:block;font-size:21px;opacity:.85;color: #8ea0a7;}
 .count{margin-top:8px;font-size:15px;color:var(--muted)}
 
 /* Bottom sheet */
